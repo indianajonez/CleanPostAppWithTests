@@ -36,9 +36,3 @@ struct AppRootView: View {
         .animation(.easeInOut, value: selectedStorageType)
     }
 }
-
-
-
-
-
-

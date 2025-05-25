@@ -32,6 +32,3 @@ struct JournalLogoView: View {
         }
     }
 }
-
-
-

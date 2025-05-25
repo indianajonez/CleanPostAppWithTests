@@ -42,7 +42,7 @@ final class ViewModelFactory {
         case .userDefaults:
             storage = UserDefaultsStorage()
         case .coreData:
-            storage = CoreDataStorage() // позже добавим реализацию
+            storage = CoreDataStorage() 
         }
 
         return PostsViewModel(storage: storage)

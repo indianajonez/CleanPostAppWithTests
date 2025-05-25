@@ -7,31 +7,20 @@
 
 import SwiftUI
 
-// MARK: - PostsListView
-
 struct PostsListView: View {
     
     // MARK: - Properties
-
+    
     @ObservedObject var viewModel: PostsViewModel
     let storageType: StorageType
     @State private var showingAddPost = false
-
+    
     // MARK: - Body
 
     var body: some View {
         VStack(spacing: 0) {
             header
-
-            // MARK: - Status Banner
-            if viewModel.isOffline {
-                banner(text: "Нет интернета — показан локальный кэш")
-            } else if viewModel.isServerUnreachable {
-                banner(text: "Сервер недоступен. Возможно, включён VPN")
-            }
-
             Divider()
-
             content
         }
         .padding(.bottom)
@@ -47,23 +36,21 @@ struct PostsListView: View {
                 viewModel.addPost(title: title, body: body)
             }
         }
-        .alert("Ошибка", isPresented: Binding<Bool>(
-            get: { viewModel.errorMessage != nil },
-            set: { _ in viewModel.errorMessage = nil })
-        ) {
-            Button("OK", role: .cancel) { }
+        .alert("Ошибка", isPresented: .constant(viewModel.alertMessage != nil)) {
+            Button("OK", role: .cancel) {
+                viewModel.networkState = .connected
+            }
         } message: {
-            Text(viewModel.errorMessage ?? "")
+            Text(viewModel.alertMessage ?? "")
         }
     }
-
+    
     // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Посты")
                 .font(.largeTitle.bold())
-
             Text(storageType.description)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -73,7 +60,7 @@ struct PostsListView: View {
         .padding(.top, 8)
         .padding(.bottom, 8)
     }
-
+    
     // MARK: - Content
 
     @ViewBuilder
@@ -89,7 +76,6 @@ struct PostsListView: View {
                 Image(systemName: "tray")
                     .font(.system(size: 40))
                     .foregroundColor(.gray)
-
                 Text("Нет постов")
                     .foregroundColor(.gray)
             }
@@ -119,23 +105,5 @@ struct PostsListView: View {
             }
         }
     }
-
-    // MARK: - Banner
-
-    @ViewBuilder
-    private func banner(text: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-            Text(text)
-                .font(.footnote)
-                .bold()
-        }
-        .foregroundColor(.orange)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 12)
-        .background(Color.orange.opacity(0.1))
-        .cornerRadius(8)
-        .padding(.horizontal)
-        .transition(.opacity)
-    }
 }
+

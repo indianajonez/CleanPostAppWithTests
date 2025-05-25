@@ -21,11 +21,13 @@ final class CoreDataStorage: PostStorageProtocol {
     func loadPosts() -> [Post] {
         let request: NSFetchRequest<CDPost> = CDPost.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(key: "id", ascending: false)]
-
+        
         do {
             return try context.fetch(request).map { $0.toPost() }
         } catch {
-            print("Ошибка загрузки из CoreData: \(error)")
+            #if DEBUG
+            print("❌ Ошибка загрузки постов из CoreData: \(error.localizedDescription)")
+            #endif
             return []
         }
     }
@@ -42,7 +44,7 @@ final class CoreDataStorage: PostStorageProtocol {
             entity.isFavorite = post.isFavorite
         }
 
-        try? context.save()
+        CoreDataManager.shared.saveContext()
     }
 
     func loadFavoriteIds() -> [Int] {
@@ -62,7 +64,7 @@ final class CoreDataStorage: PostStorageProtocol {
             for post in posts {
                 post.isFavorite = ids.contains(Int(post.id))
             }
-            try? context.save()
+            CoreDataManager.shared.saveContext()
         }
     }
 
@@ -71,6 +73,13 @@ final class CoreDataStorage: PostStorageProtocol {
     private func clearAllPosts() {
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = CDPost.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        try? context.execute(deleteRequest)
+
+        do {
+            try context.execute(deleteRequest)
+            CoreDataManager.shared.saveContext()
+        } catch {
+            assertionFailure("❌ Ошибка при удалении всех постов: \(error.localizedDescription)")
+        }
     }
+
 }

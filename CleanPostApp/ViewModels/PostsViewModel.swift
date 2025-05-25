@@ -7,38 +7,44 @@
 
 import Foundation
 import Combine
-import Network
 
 // MARK: - PostsViewModel
 
-class PostsViewModel: ObservableObject {
-    
+final class PostsViewModel: ObservableObject {
+
     // MARK: - Published Properties
 
     @Published var posts: [Post] = []
-    @Published var errorMessage: String?
     @Published var isLoading = false
-    @Published var isOffline = false
-    @Published var isServerUnreachable = false
+    @Published var networkState: NetworkState = .connected
+
+    // MARK: - Computed
+
+    var alertMessage: String? {
+        networkState.alertMessage
+    }
 
     // MARK: - Private Properties
 
     private var cancellables = Set<AnyCancellable>()
     private let storage: PostStorageProtocol
     private let networkService: NetworkServiceProtocol
+    private let networkMonitor: NetworkMonitor
 
     private var currentPage = 1
     private var isLoadingPage = false
     private var allPagesLoaded = false
 
-    private let monitor = NWPathMonitor()
-    private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
-
     // MARK: - Init
 
-    init(storage: PostStorageProtocol, networkService: NetworkServiceProtocol = NetworkService()) {
+    init(
+        storage: PostStorageProtocol,
+        networkService: NetworkServiceProtocol = NetworkService(),
+        networkMonitor: NetworkMonitor = .shared
+    ) {
         self.storage = storage
         self.networkService = networkService
+        self.networkMonitor = networkMonitor
         observeNetwork()
         loadInitialData()
     }
@@ -46,15 +52,20 @@ class PostsViewModel: ObservableObject {
     // MARK: - Network Monitoring
 
     private func observeNetwork() {
-        monitor.pathUpdateHandler = { [weak self] path in
-            DispatchQueue.main.async {
-                self?.isOffline = (path.status != .satisfied)
+        networkMonitor.$isConnected
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                guard let self else { return }
+                if !isConnected {
+                    self.networkState = .offline
+                } else if self.networkState == .offline {
+                    self.networkState = .connected
+                }
             }
-        }
-        monitor.start(queue: monitorQueue)
+            .store(in: &cancellables)
     }
 
-    // MARK: - Data Loading
+    // MARK: - Initial Load
 
     private func loadInitialData() {
         let saved = storage.loadPosts()
@@ -67,6 +78,8 @@ class PostsViewModel: ObservableObject {
         fetchNextPage()
     }
 
+    // MARK: - Networking
+
     func fetchNextPage() {
         guard !isLoadingPage, !allPagesLoaded else { return }
         isLoadingPage = true
@@ -75,27 +88,23 @@ class PostsViewModel: ObservableObject {
         networkService.fetchPosts(page: currentPage)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
-                guard let self = self else { return }
-                self.isLoadingPage = false
+                guard let self else { return }
                 self.isLoading = false
+                self.isLoadingPage = false
 
                 if case .failure(let error) = completion {
-                    self.errorMessage = error.localizedDescription
-                    self.isServerUnreachable = false
-
-                    if let urlError = error as? URLError {
-                        switch urlError.code {
-                        case .cannotConnectToHost, .cannotFindHost:
-                            self.isServerUnreachable = true
-                        default:
-                            break
-                        }
+                    if !self.networkMonitor.isConnected {
+                        self.networkState = .offline
+                    } else {
+                        self.networkState = .generalError(error.localizedDescription)
                     }
                 }
             } receiveValue: { [weak self] newPosts in
-                guard let self = self else { return }
+                guard let self else { return }
 
-                self.isServerUnreachable = false
+                if self.networkState != .offline {
+                    self.networkState = .connected
+                }
 
                 if newPosts.isEmpty {
                     self.allPagesLoaded = true
@@ -113,14 +122,14 @@ class PostsViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Actions
+
     func refreshPosts() {
         currentPage = 1
         allPagesLoaded = false
         posts.removeAll()
         fetchNextPage()
     }
-
-    // MARK: - Post Modification
 
     func toggleFavorite(for post: Post) {
         guard let index = posts.firstIndex(of: post) else { return }
@@ -156,3 +165,4 @@ class PostsViewModel: ObservableObject {
         storage.saveFavoriteIds(favs)
     }
 }
+

@@ -2,7 +2,7 @@
 //  CoreDataManager.swift
 //  CleanPostApp
 //
-//  Created by Ekaterina Saveleva on 19.05.2025.
+//  Created by Ekaterина Saveleva on 19.05.2025.
 //
 
 import Foundation
@@ -24,7 +24,7 @@ final class CoreDataManager {
         container = NSPersistentContainer(name: "CleanPostModel")
         container.loadPersistentStores { _, error in
             if let error = error {
-                fatalError("Ошибка при загрузке хранилища CoreData: \(error)")
+                fatalError("Ошибка при загрузке хранилища CoreData: \(error.localizedDescription)")
             }
         }
     }
@@ -34,5 +34,21 @@ final class CoreDataManager {
     var context: NSManagedObjectContext {
         container.viewContext
     }
+
+    // MARK: - Saving Support
+
+    func saveContext() {
+        let context = container.viewContext
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                #if DEBUG
+                assertionFailure("❌ Ошибка сохранения CoreData: \(error.localizedDescription)")
+                #endif
+            }
+        }
+    }
 }
+
 
