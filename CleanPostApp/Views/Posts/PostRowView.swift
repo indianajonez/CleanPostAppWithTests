@@ -1,16 +1,8 @@
-//
-//  PostRowView.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 20.05.2025.
-//
 
 import SwiftUI
 
-// MARK: - PostRowView
-
 struct PostRowView: View {
-    
+
     // MARK: - Properties
 
     let post: Post

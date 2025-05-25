@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-// MARK: - MainTabView
-
 struct MainTabView: View {
     
     // MARK: - Properties
@@ -22,6 +20,7 @@ struct MainTabView: View {
         TabView {
             NavigationView {
                 PostsListView(viewModel: viewModel, storageType: storageType)
+                    .navigationTitle("Посты")
             }
             .tabItem {
                 Label("Все посты", systemImage: "list.bullet")

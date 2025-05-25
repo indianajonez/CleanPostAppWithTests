@@ -6,129 +6,105 @@
 //
 
 import Foundation
-import Combine
 
 // MARK: - PostsViewModel
 
 final class PostsViewModel: ObservableObject {
-
-    // MARK: - Published Properties
-
     @Published var posts: [Post] = []
     @Published var isLoading = false
     @Published var networkState: NetworkState = .connected
 
-    // MARK: - Computed
-
-    var alertMessage: String? {
-        networkState.alertMessage
-    }
-
-    // MARK: - Private Properties
-
-    private var cancellables = Set<AnyCancellable>()
     private let storage: PostStorageProtocol
     private let networkService: NetworkServiceProtocol
-    private let networkMonitor: NetworkMonitor
 
     private var currentPage = 1
     private var isLoadingPage = false
     private var allPagesLoaded = false
 
-    // MARK: - Init
-
-    init(
-        storage: PostStorageProtocol,
-        networkService: NetworkServiceProtocol = NetworkService(),
-        networkMonitor: NetworkMonitor = .shared
-    ) {
+    init(storage: PostStorageProtocol, networkService: NetworkServiceProtocol = NetworkService()) {
         self.storage = storage
         self.networkService = networkService
-        self.networkMonitor = networkMonitor
-        observeNetwork()
         loadInitialData()
     }
 
-    // MARK: - Network Monitoring
-
-    private func observeNetwork() {
-        networkMonitor.$isConnected
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isConnected in
-                guard let self else { return }
-                if !isConnected {
-                    self.networkState = .offline
-                } else if self.networkState == .offline {
-                    self.networkState = .connected
-                }
-            }
-            .store(in: &cancellables)
-    }
-
-    // MARK: - Initial Load
-
-    private func loadInitialData() {
+    func loadInitialData() {
         let saved = storage.loadPosts()
         let favoriteIds = storage.loadFavoriteIds()
-        self.posts = saved.map { post in
+
+        posts = saved.map { post in
             var updated = post
             updated.isFavorite = favoriteIds.contains(post.id)
             return updated
         }
-        fetchNextPage()
+
+        Task { await fetchNextPage() }
     }
 
-    // MARK: - Networking
-
-    func fetchNextPage() {
+    @MainActor
+    func fetchNextPage() async {
         guard !isLoadingPage, !allPagesLoaded else { return }
+
         isLoadingPage = true
         isLoading = true
 
-        networkService.fetchPosts(page: currentPage)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isLoading = false
-                self.isLoadingPage = false
+        do {
+            let newPosts = try await networkService.fetchPosts(page: currentPage)
+            handleNewPosts(newPosts)
+        } catch {
+            handleError(error)
+        }
 
-                if case .failure(let error) = completion {
-                    if !self.networkMonitor.isConnected {
-                        self.networkState = .offline
-                    } else {
-                        self.networkState = .generalError(error.localizedDescription)
-                    }
-                }
-            } receiveValue: { [weak self] newPosts in
-                guard let self else { return }
-
-                if self.networkState != .offline {
-                    self.networkState = .connected
-                }
-
-                if newPosts.isEmpty {
-                    self.allPagesLoaded = true
-                } else {
-                    let favoriteIds = self.storage.loadFavoriteIds()
-                    let processed = newPosts.map { post in
-                        var updated = post
-                        updated.isFavorite = favoriteIds.contains(post.id)
-                        return updated
-                    }
-                    self.posts.append(contentsOf: processed)
-                    self.currentPage += 1
-                }
-            }
-            .store(in: &cancellables)
+        isLoadingPage = false
+        isLoading = false
     }
 
-    // MARK: - Actions
+    @MainActor
+    private func handleNewPosts(_ newPosts: [Post]) {
+        if networkState != .offline {
+            networkState = .connected
+        }
 
-    func refreshPosts() {
+        guard !newPosts.isEmpty else {
+            allPagesLoaded = true
+            return
+        }
+
+        let favoriteIds = storage.loadFavoriteIds()
+        let processed = newPosts.map { post in
+            var updated = post
+            updated.isFavorite = favoriteIds.contains(post.id)
+            return updated
+        }
+
+        posts.append(contentsOf: processed)
+        currentPage += 1
+    }
+
+    @MainActor
+    private func handleError(_ error: Error) {
+        if let urlError = error as? URLError, urlError.code == .notConnectedToInternet {
+            networkState = .offline
+        } else {
+            networkState = .generalError(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    func refreshPosts() async {
         currentPage = 1
         allPagesLoaded = false
-        posts.removeAll()
-        fetchNextPage()
+
+        // 🛠 Заново подгружаем кастомные посты перед загрузкой с API
+        let saved = storage.loadPosts()
+        let favoriteIds = storage.loadFavoriteIds()
+
+        posts = saved.map { post in
+            var updated = post
+            updated.isFavorite = favoriteIds.contains(post.id)
+            return updated
+        }
+
+        await fetchNextPage()
     }
 
     func toggleFavorite(for post: Post) {
@@ -157,12 +133,13 @@ final class PostsViewModel: ObservableObject {
         save()
     }
 
-    // MARK: - Persistence
-
     private func save() {
         storage.save(posts: posts)
         let favs = posts.filter { $0.isFavorite }.map { $0.id }
         storage.saveFavoriteIds(favs)
     }
-}
 
+    var alertMessage: String? {
+        networkState.alertMessage
+    }
+}

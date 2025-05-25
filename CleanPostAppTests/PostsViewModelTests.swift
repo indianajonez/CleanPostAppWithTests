@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import Combine
 @testable import CleanPostApp
 
 // MARK: - PostsViewModelTests
@@ -18,7 +17,6 @@ final class PostsViewModelTests: XCTestCase {
     var viewModel: PostsViewModel!
     var storage: MockPostStorage!
     var network: MockNetworkService!
-    var cancellables: Set<AnyCancellable>!
 
     // MARK: - Setup
 
@@ -26,8 +24,7 @@ final class PostsViewModelTests: XCTestCase {
         super.setUp()
         storage = MockPostStorage()
         network = MockNetworkService()
-        viewModel = PostsViewModel(storage: storage, networkService: network)
-        cancellables = []
+        viewModel = PostsViewModel(storage: storage, networkService: network) 
     }
 
     // MARK: - Tests

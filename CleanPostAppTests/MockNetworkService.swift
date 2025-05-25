@@ -6,20 +6,19 @@
 //
 
 import Foundation
-import Combine
 
 // MARK: - MockNetworkService
 
 class MockNetworkService: NetworkServiceProtocol {
-    
-    // MARK: - Test Configuration
-
     var result: Result<[Post], Error> = .success([])
 
-    // MARK: - NetworkServiceProtocol
-
-    func fetchPosts(page: Int) -> AnyPublisher<[Post], Error> {
-        result.publisher.eraseToAnyPublisher()
+    func fetchPosts(page: Int) async throws -> [Post] {
+        switch result {
+        case .success(let posts):
+            return posts
+        case .failure(let error):
+            throw error
+        }
     }
 }
 

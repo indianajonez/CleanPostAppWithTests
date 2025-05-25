@@ -1,28 +1,16 @@
-//
-//  AddPostView.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 16.05.2025.
-//
 
 import SwiftUI
 
-// MARK: - AddPostView
-
 struct AddPostView: View {
-    
-    // MARK: - Environment
 
-    @Environment(\.dismiss) var dismiss
+    // MARK: - Properties
 
-    // MARK: - State
+    @Environment(\.dismiss) private var dismiss
+    @State private var title: String = ""
+    @State private var bodyText: String = ""
+    @State private var showAlert = false
 
-    @State private var title = ""
-    @State private var postBody = ""
-
-    // MARK: - Callback
-
-    var onSave: (String, String) -> Void
+    let onSave: (String, String) -> Void
 
     // MARK: - Body
 
@@ -33,26 +21,37 @@ struct AddPostView: View {
                     TextField("Введите заголовок", text: $title)
                 }
 
-                Section(header: Text("Текст поста")) {
-                    TextField("Введите текст", text: $postBody)
+                Section(header: Text("Текст")) {
+                    TextEditor(text: $bodyText)
+                        .frame(minHeight: 100)
                 }
             }
             .navigationTitle("Новый пост")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Сохранить") {
-                        guard !title.isEmpty, !postBody.isEmpty else { return }
-                        onSave(title, postBody)
-                        dismiss()
-                    }
+            .navigationBarItems(
+                leading: Button("Отмена") {
+                    dismiss()
+                },
+                trailing: Button("Сохранить") {
+                    validateAndSave()
                 }
-
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Отмена") {
-                        dismiss()
-                    }
-                }
+            )
+            .alert("Ошибка", isPresented: $showAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Пожалуйста, заполните все поля перед добавлением поста.")
             }
+        }
+    }
+
+    // MARK: - Validation
+
+    private func validateAndSave() {
+        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            showAlert = true
+        } else {
+            onSave(title, bodyText)
+            dismiss()
         }
     }
 }

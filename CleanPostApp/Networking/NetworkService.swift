@@ -6,33 +6,29 @@
 //
 
 import Foundation
-import Combine
 
 // MARK: - NetworkServiceProtocol
 
 protocol NetworkServiceProtocol {
-    func fetchPosts(page: Int) -> AnyPublisher<[Post], Error>
+    func fetchPosts(page: Int) async throws -> [Post]
 }
 
 // MARK: - APIError
 
 enum APIError: LocalizedError {
     case invalidURL
-    case serverError(statusCode: Int)
+    case serverError(Int)
     case decodingFailed
-    case networkError(URLError)
     case unknown(Error)
 
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Некорректный URL."
+            return "Некорректный URL"
         case .serverError(let code):
-            return "Ошибка сервера: код \(code)."
+            return "Ошибка сервера: \(code)"
         case .decodingFailed:
-            return "Ошибка обработки данных."
-        case .networkError(let urlError):
-            return urlError.localizedDescription
+            return "Ошибка при декодировании данных"
         case .unknown(let error):
             return error.localizedDescription
         }
@@ -41,49 +37,39 @@ enum APIError: LocalizedError {
 
 
 final class NetworkService: NetworkServiceProtocol {
-    
-    // MARK: - Config
-    
+
     private enum APIConfig {
         static let baseURL = "https://jsonplaceholder.typicode.com/posts"
         static let pageLimit = 20
     }
-    
-    // MARK: - Properties
 
-    private let urlSession: URLSession
-    
-    // MARK: - Init
-
-    init(urlSession: URLSession = .shared) {
-        self.urlSession = urlSession
-    }
-    
-    // MARK: - Public methods
-
-    func fetchPosts(page: Int) -> AnyPublisher<[Post], Error> {
-        guard let url = URL(string: "\(APIConfig.baseURL)?_page=\(page)&_limit=\(APIConfig.pageLimit)") else {
-            return Fail(error: APIError.invalidURL).eraseToAnyPublisher()
+    func fetchPosts(page: Int) async throws -> [Post] {
+        guard var components = URLComponents(string: APIConfig.baseURL) else {
+            throw APIError.invalidURL
         }
 
-        return urlSession.dataTaskPublisher(for: url)
-            .tryMap { data, response in
-                guard let httpResponse = response as? HTTPURLResponse,
-                      200..<300 ~= httpResponse.statusCode else {
-                    throw APIError.serverError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? -1)
-                }
-                return data
+        components.queryItems = [
+            URLQueryItem(name: "_page", value: "\(page)"),
+            URLQueryItem(name: "_limit", value: "\(APIConfig.pageLimit)")
+        ]
+
+        guard let url = components.url else {
+            throw APIError.invalidURL
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                throw APIError.serverError((response as? HTTPURLResponse)?.statusCode ?? -1)
             }
-            .decode(type: [Post].self, decoder: JSONDecoder())
-            .mapError { error in
-                if let decodingError = error as? DecodingError {
-                    return APIError.decodingFailed
-                } else if let apiError = error as? APIError {
-                    return apiError
-                } else {
-                    return APIError.unknown(error)
-                }
-            }
-            .eraseToAnyPublisher()
+
+            return try JSONDecoder().decode([Post].self, from: data)
+        } catch let decodingError as DecodingError {
+            throw APIError.decodingFailed
+        } catch {
+            throw APIError.unknown(error)
+        }
     }
 }

@@ -1,20 +1,14 @@
-//
-//  PostsListView.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 19.05.2025.
-//
 
 import SwiftUI
 
 struct PostsListView: View {
-    
+
     // MARK: - Properties
-    
+
     @ObservedObject var viewModel: PostsViewModel
     let storageType: StorageType
     @State private var showingAddPost = false
-    
+
     // MARK: - Body
 
     var body: some View {
@@ -44,13 +38,11 @@ struct PostsListView: View {
             Text(viewModel.alertMessage ?? "")
         }
     }
-    
+
     // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Посты")
-                .font(.largeTitle.bold())
             Text(storageType.description)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -60,7 +52,7 @@ struct PostsListView: View {
         .padding(.top, 8)
         .padding(.bottom, 8)
     }
-    
+
     // MARK: - Content
 
     @ViewBuilder
@@ -82,13 +74,12 @@ struct PostsListView: View {
             Spacer()
         } else {
             List {
-                ForEach(viewModel.posts.indices, id: \.self) { index in
-                    let post = viewModel.posts[index]
+                ForEach(viewModel.posts) { post in
                     PostRowView(
                         post: post,
-                        isLast: index == viewModel.posts.count - 1,
+                        isLast: post == viewModel.posts.last,
                         onAppear: {
-                            viewModel.fetchNextPage()
+                            Task { await viewModel.fetchNextPage() }
                         },
                         onToggleFavorite: {
                             viewModel.toggleFavorite(for: post)
@@ -101,9 +92,8 @@ struct PostsListView: View {
             }
             .listStyle(.plain)
             .refreshable {
-                viewModel.refreshPosts()
+                await viewModel.refreshPosts()
             }
         }
     }
 }
-
