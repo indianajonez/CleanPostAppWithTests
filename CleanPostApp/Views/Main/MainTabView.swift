@@ -1,9 +1,3 @@
-//
-//  ContentView.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 16.05.2025.
-//
 
 import SwiftUI
 

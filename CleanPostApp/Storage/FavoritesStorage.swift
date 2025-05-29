@@ -1,40 +1,30 @@
-//
-//  FavoritesStorage.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 16.05.2025.
-//
 
 import Foundation
 
-// MARK: - FavoritesStorage
-
 final class FavoritesStorage {
     
-    // MARK: - Keys
+    // MARK: - Private properties
 
     private let favoritesKey = "favoriteIds"
     private let customPostsKey = "customPosts"
 
-    // MARK: - Favorites
+    // MARK: - Private methods
 
-    func save(favoriteIds: [Int]) {
+    private func save(favoriteIds: [Int]) {
         UserDefaults.standard.set(favoriteIds, forKey: favoritesKey)
     }
 
-    func loadFavoriteIds() -> [Int] {
+    private func loadFavoriteIds() -> [Int] {
         UserDefaults.standard.array(forKey: favoritesKey) as? [Int] ?? []
     }
 
-    // MARK: - Custom Posts
-
-    func saveCustomPosts(_ posts: [Post]) {
+    private func saveCustomPosts(_ posts: [Post]) {
         if let data = try? JSONEncoder().encode(posts) {
             UserDefaults.standard.set(data, forKey: customPostsKey)
         }
     }
 
-    func loadCustomPosts() -> [Post] {
+    private func loadCustomPosts() -> [Post] {
         guard let data = UserDefaults.standard.data(forKey: customPostsKey),
               let posts = try? JSONDecoder().decode([Post].self, from: data) else {
             return []

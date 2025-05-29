@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-// MARK: - FavoritesView
-
 struct FavoritesView: View {
     
     // MARK: - Properties

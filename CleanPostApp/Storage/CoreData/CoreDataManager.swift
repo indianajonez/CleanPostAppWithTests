@@ -1,24 +1,22 @@
-//
-//  CoreDataManager.swift
-//  CleanPostApp
-//
-//  Created by Ekaterина Saveleva on 19.05.2025.
-//
 
 import Foundation
 import CoreData
 
-// MARK: - CoreDataManager
-
 final class CoreDataManager {
     
-    // MARK: - Singleton
+    // MARK: - Public properties
     
     static let shared = CoreDataManager()
-
-    // MARK: - Core Data Stack
-
-    let container: NSPersistentContainer
+    
+    var context: NSManagedObjectContext {
+        container.viewContext
+    }
+    
+    // MARK: - Private properties
+    
+    private let container: NSPersistentContainer
+    
+    // MARK: - Init
 
     private init() {
         container = NSPersistentContainer(name: "CleanPostModel")
@@ -29,13 +27,7 @@ final class CoreDataManager {
         }
     }
 
-    // MARK: - Context Access
-
-    var context: NSManagedObjectContext {
-        container.viewContext
-    }
-
-    // MARK: - Saving Support
+    // MARK: - Public Methods
 
     func saveContext() {
         let context = container.viewContext
@@ -50,5 +42,3 @@ final class CoreDataManager {
         }
     }
 }
-
-

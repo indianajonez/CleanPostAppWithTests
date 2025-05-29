@@ -1,13 +1,5 @@
-//
-//  Post.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 16.05.2025.
-//
 
 import Foundation
-
-// MARK: - Post Model
 
 struct Post: Codable, Identifiable, Equatable {
     let id: Int

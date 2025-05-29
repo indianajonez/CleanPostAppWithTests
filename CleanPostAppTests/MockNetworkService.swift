@@ -1,13 +1,5 @@
-//
-//  MockNetworkService.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 20.05.2025.
-//
 
 import Foundation
-
-// MARK: - MockNetworkService
 
 class MockNetworkService: NetworkServiceProtocol {
     var result: Result<[Post], Error> = .success([])

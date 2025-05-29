@@ -1,22 +1,14 @@
-//
-//  CoreDataStorage.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 19.05.2025.
-//
 
 import Foundation
 import CoreData
 
-// MARK: - CoreDataStorage
-
 final class CoreDataStorage: PostStorageProtocol {
     
-    // MARK: - Properties
+    // MARK: - Private properties
 
     private let context = CoreDataManager.shared.context
 
-    // MARK: - PostStorageProtocol
+    // MARK: - Public methods
 
     func loadPosts() -> [Post] {
         let request: NSFetchRequest<CDPost> = CDPost.fetchRequest()
@@ -68,7 +60,7 @@ final class CoreDataStorage: PostStorageProtocol {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Private methods
 
     private func clearAllPosts() {
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = CDPost.fetchRequest()
@@ -81,5 +73,4 @@ final class CoreDataStorage: PostStorageProtocol {
             assertionFailure("❌ Ошибка при удалении всех постов: \(error.localizedDescription)")
         }
     }
-
 }

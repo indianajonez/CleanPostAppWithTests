@@ -1,22 +1,14 @@
-//
-//  UserDefaultsStorage.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 19.05.2025.
-//
 
 import Foundation
 
-// MARK: - UserDefaultsStorage
-
 final class UserDefaultsStorage: PostStorageProtocol {
     
-    // MARK: - Keys
+    // MARK: - Private properties
 
     private let postsKey = "cachedPosts"
     private let favoritesKey = "favoriteIds"
 
-    // MARK: - PostStorageProtocol
+    // MARK: - Public methods
 
     func loadPosts() -> [Post] {
         guard let data = UserDefaults.standard.data(forKey: postsKey),

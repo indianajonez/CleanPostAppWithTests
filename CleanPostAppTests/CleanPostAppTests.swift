@@ -1,13 +1,5 @@
-//
-//  CleanPostAppTests.swift
-//  CleanPostAppTests
-//
-//  Created by Ekaterina Saveleva on 20.05.2025.
-//
 
 import Testing
-
-// MARK: - CleanPostAppTests
 
 struct CleanPostAppTests {
 

@@ -29,13 +29,16 @@
 
 ## 🗂 Структура проекта
 
-- `AppRootView.swift`
 - `Views/`
-  - `PostsListView.swift`
-  - `AddPostView.swift`
-  - `PostRowView.swift`
-  - `FavoritesView.swift`
-  - `MainTabView.swift`
+  - `Favorites/`
+    - `FavoritesView.swift`
+  - `Main/`
+    - `AppRootView.swift`
+    - `MainTabView.swift`
+  - `Posts/`
+    - `AddPostView.swift`
+    - `PostRowView.swift`
+    - `PostsListView.swift`
   - `Welcome/`
     - `WelcomeView.swift`
     - `StorageSelectionCard.swift`
@@ -45,9 +48,9 @@
   - `PostsViewModel.swift`
 - `Models/`
   - `Post.swift`
-  - `StorageType.swift`
 - `Networking/`
   - `NetworkService.swift`
+  - `APIError.swift`
 - `Storage/`
   - `PostStorageProtocol.swift`
   - `UserDefaultsStorage.swift`
@@ -57,6 +60,7 @@
     - `CoreDataStorage.swift`
     - `CDPost+CoreDataClass.swift`
     - `CDPost+CoreDataProperties.swift`
+    - `CleanPostModel.xcdatamodeld`
 - `State/`
   - `NetworkState.swift`
 - `Factory/`
@@ -66,6 +70,7 @@
   - `CleanPostAppApp.swift`
   - `Assets.xcassets/`
 - `Tests/`
+  - `CleanPostAppTests.swift`
   - `PostsViewModelTests.swift`
   - `MockNetworkService.swift`
   - `MockPostStorage.swift`

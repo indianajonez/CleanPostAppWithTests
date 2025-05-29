@@ -1,14 +1,8 @@
-//
-//  CDPost+CoreDataProperties.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 19.05.2025.
-//
 
 import Foundation
 import CoreData
 
-// MARK: - CDPost CoreData Properties
+// MARK: - CDPost extensions
 
 extension CDPost {
 
@@ -22,8 +16,6 @@ extension CDPost {
     @NSManaged public var body: String?
     @NSManaged public var isFavorite: Bool
 }
-
-// MARK: - Identifiable Conformance
 
 extension CDPost: Identifiable { }
 

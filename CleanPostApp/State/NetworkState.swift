@@ -1,21 +1,15 @@
-//
-//  NetworkState.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 23.05.2025.
-//
 
 import SwiftUI
 import Foundation
 import Network
-
-// MARK: - NetworkState
 
 enum NetworkState: Equatable {
     case connected
     case offline
     case serverUnreachable
     case generalError(String)
+    
+    //MARK: Computer properties
 
     var alertMessage: String? {
         switch self {

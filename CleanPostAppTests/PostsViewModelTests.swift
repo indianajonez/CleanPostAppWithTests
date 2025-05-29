@@ -1,14 +1,6 @@
-//
-//  PostsViewModelTests.swift
-//  CleanPostApp
-//
-//  Created by Ekaterina Saveleva on 20.05.2025.
-//
 
 import XCTest
 @testable import CleanPostApp
-
-// MARK: - PostsViewModelTests
 
 final class PostsViewModelTests: XCTestCase {
     
